@@ -102,6 +102,10 @@ func payment(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error("查询转账目标账户失败")
 	}
 
+	if fval == nil || tval == nil {
+		return shim.Error(" 转出账户或者目标转入账户为空,请核对")
+	}
+
 	//实现转账
 	_, err = strconv.Atoi(value)
 	if err != nil {
@@ -153,7 +157,7 @@ func del(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	if err != nil {
 		return shim.Error("查询失败")
 	}
-	if result != nil {
+	if result == nil {
 		return shim.Error("根据指定的账户名，没有查找道相应的余额")
 	}
 	err = stub.DelState(args[0])
@@ -161,6 +165,78 @@ func del(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error("删除指定的账户失败")
 	}
 	return shim.Success([]byte("删除指定账户成功" + args[0]))
+}
+
+//设定账户余额
+//－c '{"Args":["set","targetAccount","value"]}'
+func set(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	if len(args) != 2 {
+		return shim.Error("指定参数有误,请检查后重试")
+	}
+	result, err := stub.GetState(args[0])
+	if err != nil {
+		return shim.Error("查询账户余额失败")
+	}
+	if result != nil {
+		return shim.Error("指定账户不存在")
+	}
+	//存入账户
+	oval, err := strconv.Atoi(string(result))
+	if err != nil {
+		return shim.Error("原有账户数据转换失败")
+	}
+	ival, err := strconv.Atoi(args[1])
+	if err != nil {
+		return shim.Error("转换数据出错")
+	}
+	oval += ival
+
+	//保存信息
+	err = stub.PutState(args[0], []byte(strconv.Itoa(oval)))
+	if err != nil {
+		return shim.Error("账户余额保存失败")
+	}
+	return shim.Success(nil)
+}
+
+//提取
+//－c '{"Args":["get","targetAccount","targetValue"]}'
+func get(stub shim.ChaincodeStubInterface, args [] string) peer.Response {
+	if len(args) != 2 {
+		return shim.Error("调用参数设置错误，请核对后重试")
+	}
+	val, err := stub.GetState(args[0])
+	if err != nil {
+		return shim.Error("查询账户余额失败")
+	}
+
+	if val == nil {
+		return shim.Error("查询账户余额为空")
+	}
+
+	ival, error := strconv.Atoi(string(val))
+	if error != nil {
+		return shim.Error("账户余额转化失败")
+	}
+
+	targetVal, error := strconv.Atoi(args[1])
+
+	if error != nil {
+		return shim.Error("提取金额处理失败")
+	}
+
+	if targetVal > ival {
+		return shim.Error("账户余额不足，无法体现")
+	}
+
+	ival -= targetVal
+
+	//更新提取后的账户余额
+	error = stub.PutState(args[0], []byte(strconv.Itoa(ival)))
+	if error != nil {
+		return shim.Error("提款失败,账户更新余额失败")
+	}
+	return shim.Success(nil)
 }
 
 func main() {
