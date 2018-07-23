@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="fabric_projects">
+    <serverData>
+      <paths name="fabric_projects">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/hyfa/fabric-samples/chaincode/fabric_projects" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
